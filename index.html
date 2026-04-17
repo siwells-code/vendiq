@@ -65,6 +65,20 @@
   .brand-name { font-weight: 600; letter-spacing: 0.3px; font-size: 15px; }
   .brand-sub { color: var(--text-2); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
   .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .roi-counter {
+    display: flex; flex-direction: column; align-items: flex-end;
+    padding: 4px 14px; border-right: 1px solid var(--border-soft); margin-right: 6px;
+  }
+  .roi-label {
+    font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-2); font-weight: 600;
+  }
+  .roi-value {
+    font-size: 18px; font-weight: 700; color: var(--accent-strong);
+    font-variant-numeric: tabular-nums; letter-spacing: -0.3px;
+    text-shadow: 0 0 12px rgba(63, 240, 225, 0.4);
+  }
+  .roi-sub { font-size: 10px; color: var(--text-2); margin-top: 1px; }
 
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
@@ -496,6 +510,11 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <div class="roi-counter" data-tip="Estimated value AI has generated this session">
+      <div class="roi-label">AI Value Generated</div>
+      <div class="roi-value" id="roiValue">$0</div>
+      <div class="roi-sub" id="roiSub">since you opened the dashboard</div>
+    </div>
     <div class="toggle" id="modeToggle">
       <button class="without" data-mode="without">Without AI</button>
       <button class="with active" data-mode="with">With AI</button>
@@ -1888,6 +1907,28 @@ document.getElementById('chatInput').addEventListener('keydown', e => {
 
 // Prospect toggle
 document.getElementById('prospectBtn').addEventListener('click', toggleProspects);
+
+/* ========= LIVE ROI COUNTER ========= */
+let ROI_START = Date.now();
+let ROI_TARGET = 0;
+let ROI_DISPLAYED = 0;
+
+function computeRoiTarget() {
+  // Rough model: ~$14/hour of AI-generated value while dashboard is running
+  // (stockouts prevented + anomalies caught + route optimization savings)
+  const secondsElapsed = (Date.now() - ROI_START) / 1000;
+  const ratePerSecond = 14 / 3600;
+  return secondsElapsed * ratePerSecond;
+}
+
+function tickRoi() {
+  ROI_TARGET = computeRoiTarget();
+  ROI_DISPLAYED += (ROI_TARGET - ROI_DISPLAYED) * 0.15;
+  const el = document.getElementById('roiValue');
+  if (el) el.textContent = '$' + ROI_DISPLAYED.toFixed(2);
+  requestAnimationFrame(tickRoi);
+}
+tickRoi();
 
 init();
 </script>
